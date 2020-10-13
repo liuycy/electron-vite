@@ -12,22 +12,25 @@ let manualRestart = false
 
 function startRenderer() {
   return new Promise((resolve) => {
-    createServer({}).listen(8080, resolve)
+    createServer({
+      root: path.join(__dirname, '../src/renderer'),
+    }).listen(8080, resolve)
   })
 }
 
 function startMain() {
   return new Promise((resolve, reject) => {
     const config = {
-      entryPoints: [path.join(__dirname, '../src/main.js')],
+      entryPoints: [path.join(__dirname, '../src/main/index.js')],
       outfile: path.join(__dirname, '../dist/main.js'),
+      define: { IS_DEV: 'true' },
       platform: 'node',
       format: 'cjs',
     }
 
     build(config).then(resolve).catch(reject)
 
-    chokidar.watch(path.join(__dirname, '../src')).on('change', () => {
+    chokidar.watch(path.join(__dirname, '../src/main')).on('change', () => {
       if (electronProcess && electronProcess.kill) {
         manualRestart = true
         process.kill(electronProcess.pid)
@@ -44,7 +47,7 @@ function startMain() {
 }
 
 function startElectron() {
-  var args = ['--inspect=5858', path.join(__dirname, '../dist/main.js')]
+  var args = [path.join(__dirname, '../dist/main.js')]
 
   if (process.env.npm_execpath.endsWith('yarn.js')) {
     args = args.concat(process.argv.slice(3))
